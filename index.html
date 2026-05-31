@@ -1,14 +1,13 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="manifest" href="manifest.json">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
-<meta name="theme-color" content="#1e3c72">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gino AI</title>
+    <title>Gino IA</title>
+    <link rel="manifest" href="manifiesto.json">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1e3c72">
     <style>
         /* Estilos Generales y Fondo Azul */
         * {
@@ -22,6 +21,7 @@
             background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             height: 100vh;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             overflow: hidden;
@@ -39,57 +39,53 @@
             pointer-events: none;
         }
 
-        .burbuja {
-            position: absolute;
-            bottom: -100px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-            animation: flotar 10s infinite linear;
-        }
-
-        @keyframes flotar {
-            0% { transform: translateY(0) scale(1); opacity: 0; }
-            50% { opacity: 0.5; }
-            100% { transform: translateY(-110vh) scale(1.2); opacity: 0; }
-        }
-
-        /* Contenedor de la App */
+        /* Contenedor de la Aplicación */
         .app-container {
+            position: relative;
+            z-index: 2;
             width: 100%;
-            max-width: 450px;
-            height: 90vh;
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 20px;
+            max-width: 500px;
+            height: 100vh;
             display: flex;
             flex-direction: column;
-            z-index: 2;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-            overflow: hidden;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
         }
 
-        /* Cabecera / Header */
+        /* Encabezado */
         .header {
-            padding: 20px;
-            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
             text-align: center;
             color: white;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .header h1 {
-            font-size: 1.5rem;
-            letter-spacing: 1px;
+            font-size: 24px;
+            font-weight: bold;
         }
 
         .header p {
-            font-size: 0.8rem;
+            font-size: 12px;
             opacity: 0.8;
         }
 
-        /* Zona de Mensajes */
+        /* Botón de Instalación Superior */
+        #btnInstalar {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            width: 90%;
+            font-weight: bold;
+            margin: 10px auto;
+            text-align: center;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        }
+
+        /* Área de Mensajes */
         .chat-box {
             flex: 1;
             padding: 20px;
@@ -99,7 +95,7 @@
             gap: 15px;
         }
 
-        /* Estilo de los Globos de Mensaje */
+        /* Globos de Mensaje */
         .mensaje {
             max-width: 80%;
             padding: 12px 16px;
@@ -110,7 +106,7 @@
             word-wrap: break-word;
         }
 
-        .gino {
+        .Gino {
             background: rgba(255, 255, 255, 0.2);
             align-self: flex-start;
             border-top-left-radius: 2px;
@@ -142,7 +138,7 @@
             font-size: 1rem;
         }
 
-        .btn {
+        .boton {
             background: #00c6ff;
             border: none;
             width: 45px;
@@ -150,16 +146,14 @@
             border-radius: 50%;
             color: white;
             cursor: pointer;
-            font-size: 1.2rem;
             display: flex;
             justify-content: center;
             align-items: center;
             transition: transform 0.2s;
             user-select: none;
-            -webkit-user-select: none;
         }
 
-        .btn:active {
+        .boton:active {
             transform: scale(0.9);
         }
 
@@ -172,122 +166,77 @@
 
     <div class="burbujas" id="contenedor-burbujas"></div>
 
-        <button id="btnInstalar" style="display:none; background: #28a745; color: white; border: none; padding: 12px; border-radius: 8px; width: 90%; font-weight: bold; margin: 10px auto; display: none; text-align: center;">
-        📥 Instalar App de Gino
-    </button>
-
     <div class="app-container">
         <div class="header">
             <h1>Gino</h1>
-            <p id="estado">● En línea</p>
+            <p>● En línea</p>
         </div>
 
+        <!-- Botón de instalación (oculto por defecto hasta que lo active el script) -->
+        <button id="btnInstalar" style="display: none;">📥 Instalar App de Gino</button>
+
         <div class="chat-box" id="chatBox">
-            <div class="mensaje gino">
+            <div class="mensaje Gino">
                 ¡Hola! Soy Gino, esta es una ia de Nicolas Brizuela, para ayudarte. ¿De qué te gustaría charlar hoy? 😊
             </div>
         </div>
 
         <div class="input-area">
-            <input type="text" id="userInput" placeholder="Escribe un mensaje..." onkeypress="detectarEnter(event)">
-            <button class="btn" onclick="enviarMensaje()">➤</button>
-            <button class="btn btn-voz" id="btnVoz" onclick="controlarAudio()">🎤</button>
+            <input type="text" id="userInput" placeholder="Escribe un mensaje...">
+            <button class="boton" id="sendButton">➔</button>
+            <button class="boton btn-voz" id="btnVoz">🎤</button>
         </div>
     </div>
 
     <script>
-        // ==========================================
-        // CONFIGURACIÓN: TU API KEY
-        // ==========================================
-        const API_KEY = "AQ.Ab8RN6JD1P_jy9M-nG7l5Agn3JGKUH_ZMYEd8nA7B_Uo_ZiOxg"; 
-
-        // Burbujas
-        const contenedor = document.getElementById('contenedor-burbujas');
-        for (let i = 0; i < 15; i++) {
-            let burbuja = document.createElement('div');
-            burbuja.classList.add('burbuja');
-            let tamano = Math.random() * 60 + 20;
-            burbuja.style.width = `${tamano}px`;
-            burbuja.style.height = `${tamano}px`;
-            burbuja.style.left = `${Math.random() * 100}%`;
-            burbuja.style.animationDelay = `${Math.random() * 8}s`;
-            burbuja.style.animationDuration = `${Math.random() * 5 + 7}s`;
-            contenedor.appendChild(burbuja);
-        }
-
+        // Configuración de la API (Asegúrate de tener configurada tu API Key en Vercel o aquí si la usabas directa)
         const chatBox = document.getElementById('chatBox');
         const userInput = document.getElementById('userInput');
-        const estado = document.getElementById('estado');
+        const sendButton = document.getElementById('sendButton');
 
-        // Enviar Texto Normal
-        async function enviarMensaje() {
-            const texto = userInput.value.trim();
-            if (texto === "TU_APY_KEY_ACA") return;
-
-            agregarMensaje(texto, 'usuario');
-            userInput.value = "";
-            procesarConGemini(texto);
-        }
-
-        // Conectar con el cerebro de Google Gemini
-        async function procesarConGemini(textoPrompt) {
-            if (API_KEY === "") {
-                setTimeout(() => {
-                    agregarMensaje("¡Hola! Acordate de poner tu API Key en la línea 121 del código.", 'gino');
-                }, 1000);
-                return;
-            }
-
-            try {
-                estado.innerText = "● Gino está pensando...";
-                estado.style.color = "#ffeb3b";
-
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
-                const data = {
-                    contents: [{ parts: [{ text: textoPrompt }] }],
-                    systemInstruction: {
-                        parts: [{ text: "Tu nombre es Gino. Sos una inteligencia artificial amigable creada por Nicolas Brizuela para ayudar al usuario. Hablás en español latino corto, alegre y fluido." }]
-                    }
-                };
-
-                const respuesta = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-
-                const resultadoJson = await respuesta.json();
-                const respuestaIA = resultadoJson.candidates[0].content.parts[0].text;
-                agregarMensaje(respuestaIA, 'gino');
-
-            } catch (error) {
-                console.error(error);
-                agregarMensaje("Che, se me cortó la onda con el servidor. Revisá la API Key.", 'gino');
-            } finally {
-                estado.innerText = "● En línea";
-                estado.style.color = "white";
-            }
-        }
-
-        function detectarEnter(event) {
-            if (event.key === "Enter") enviarMensaje();
-        }
-
-        function agregarMensaje(texto, remitente) {
+        function appendMessage(text, sender) {
             const nuevoMensaje = document.createElement('div');
-            nuevoMensaje.classList.add('mensaje', remitente);
-            nuevoMensaje.innerText = texto;
+            nuevoMensaje.classList.add('mensaje', sender);
+            nuevoMensaje.innerText = text;
             chatBox.appendChild(nuevoMensaje);
             chatBox.scrollTop = chatBox.scrollHeight;
         }
-              // ==========================================
-        // 🎙️ SISTEMA DE RECONOCIMIENTO DE VOZ RE-ACTIVADO
-        // ==========================================
+
+        async function sendMessage() {
+            const text = userInput.value.trim();
+            if (!text) return;
+
+            appendMessage(text, 'usuario');
+            userInput.value = '';
+
+            try {
+                // Simulación de llamada al servidor/API. Reemplaza esta sección con tu fetch real a Gemini
+                // Si usabas una URL de Vercel, va acá.
+                const response = await fetch('/api/chat', { 
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: text })
+                });
+                
+                if(!response.ok) throw new Error("Error de API");
+                const data = await response.json();
+                appendMessage(data.reply, 'Gino');
+            } catch (error) {
+                // Si falla la conexión real, saltará este mensaje que tenías originalmente
+                appendMessage("Che, se me cortó la onda con el servidor. Revisá la API Key.", 'Gino');
+            }
+        }
+
+        sendButton.addEventListener('click', sendMessage);
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        // 🎤 SISTEMA DE RECONOCIMIENTO DE VOZ (En inglés nativo de JavaScript)
         let reconocimiento;
         let grabando = false;
-
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        
+
         if (SpeechRecognition) {
             reconocimiento = new SpeechRecognition();
             reconocimiento.lang = 'es-AR';
@@ -296,68 +245,67 @@
 
             reconocimiento.onstart = () => {
                 grabando = true;
-                document.getElementById('btnVoz').innerText = "🛑";
-                document.getElementById('btnVoz').style.background = "#333";
-                estado.innerText = "● Gino escuchando...";
-                estado.style.color = "#4caf50";
+                document.getElementById('btnVoz').innerText = '🛑';
+                document.getElementById('btnVoz').style.background = '#333';
             };
 
             reconocimiento.onresult = (event) => {
                 const textoEscuchado = event.results[0][0].transcript;
                 userInput.value = textoEscuchado;
-                enviarMensaje(); 
+                sendMessage(); // Llama a la función correcta en inglés
             };
 
             reconocimiento.onend = () => {
                 grabando = false;
-                document.getElementById('btnVoz').innerText = "🎤";
-                document.getElementById('btnVoz').style.background = "linear-gradient(to right, #ff4b2b, #ff416c)";
-                estado.innerText = "● En línea";
-                estado.style.color = "white";
+                document.getElementById('btnVoz').innerText = '🎤';
+                document.getElementById('btnVoz').style.background = 'linear-gradient(to right, #ff4b2b, #ff416c)';
             };
+
+            document.getElementById('btnVoz').addEventListener('click', () => {
+                if (grabando) {
+                    reconocimiento.stop();
+                } else {
+                    reconocimiento.start();
+                }
+            });
         }
 
-        window.controlarAudio = function() {
-            if (!reconocimiento) {
-                alert("El reconocimiento de voz no está disponible o está bloqueado.");
-                return;
-            }
-            if (grabando) {
-                reconocimiento.stop();
-            } else {
-                reconocimiento.start();
-            }
-        }
-                // 🚀 REGISTRO DEL SERVICE WORKER PARA PERMITIR LA INSTALACIÓN
+        // 🚀 REGISTRO DEL SERVICE WORKER
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/sw.js')
-                    .then(reg => console.log('Service Worker registrado con éxito', reg))
-                    .catch(err => console.error('Error al registrar el Service Worker', err));
+                    .then(reg => console.log('Service Worker registrado', reg))
+                    .catch(err => console.error('Error en Service Worker', err));
             });
         }
+
+        // 📥 LÓGICA DEL BOTÓN DE INSTALACIÓN IMPERDIBLE
         let deferredPrompt;
+        const btnInstalar = document.getElementById('btnInstalar');
 
-window.addEventListener('beforeinstallprompt', (e) => {
-    // Evita que el navegador muestre el cartel automático
-    e.preventDefault();
-    // Guarda el evento para usarlo después
-    deferredPrompt = e;
-    // Muestra nuestro botón de instalación
-    document.getElementById('btnInstalar').style.display = 'block';
-});
-
-document.getElementById('btnInstalar').addEventListener('click', (e) => {
-    if (deferredPrompt) {
-        deferredPrompt.prompt();
-        deferredPrompt.userChoice.then((choiceResult) => {
-            if (choiceResult.outcome === 'accepted') {
-                console.log('El usuario aceptó instalar la app');
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            if (btnInstalar) {
+                btnInstalar.style.display = 'block'; // Solo aparece si es instalable
             }
-            deferredPrompt = null;
         });
-    }
-});
-</script>
+
+        if (btnInstalar) {
+            btnInstalar.addEventListener('click', () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    deferredPrompt.userChoice.then((choiceResult) => {
+                        if (choiceResult.outcome === 'accepted') {
+                            console.log('El usuario instaló Gino IA');
+                            btnInstalar.style.display = 'none';
+                        }
+                        deferredPrompt = null;
+                    });
+                }
+            });
+        }
+    </script>
 </body>
 </html>
+
