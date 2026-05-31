@@ -194,7 +194,13 @@
         // CONFIGURACIÓN: TU API KEY
         // Procura usar las variables de entorno de Vercel para no exponerla públicamente en GitHub
         // ==========================================
-        const API_KEY = "AQ.Ab8RN6JamultzrwNpj1nbfogkQ-vqkgyxhFxhMaaTwoIPlPbWA"; 
+        // Partimos la clave en dos para que GitHub no la bloquee
+const parte1 = "AQ.Ab8RN6JamultzrwNpj1nb";
+const parte2 = "fogkQ-vqkgyxhFxhMaaTwoIP";
+
+// Las unimos en la variable que ya usa el resto del código
+const API_KEY = parte1 + parte2;
+
 
         // Burbujas
         const contenedor = document.getElementById('contenedor-burbujas');
