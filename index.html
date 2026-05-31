@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gino IA</title>
-    <link rel="manifest" href="manifiesto.json">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Gino AI</title>
+    <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1e3c72">
+    
     <style>
         /* Estilos Generales y Fondo Azul */
         * {
@@ -21,7 +20,6 @@
             background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             height: 100vh;
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
             overflow: hidden;
@@ -39,53 +37,57 @@
             pointer-events: none;
         }
 
-        /* Contenedor de la Aplicación */
-        .app-container {
-            position: relative;
-            z-index: 2;
-            width: 100%;
-            max-width: 500px;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
+        .burbuja {
+            position: absolute;
+            bottom: -100px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: flotar 10s infinite linear;
         }
 
-        /* Encabezado */
+        @keyframes flotar {
+            0% { transform: translateY(0) scale(1); opacity: 0; }
+            50% { opacity: 0.5; }
+            100% { transform: translateY(-110vh) scale(1.2); opacity: 0; }
+        }
+
+        /* Contenedor de la App */
+        .app-container {
+            width: 100%;
+            max-width: 450px;
+            height: 90vh;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            z-index: 2;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        /* Cabecera / Header */
         .header {
-            padding: 15px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
             text-align: center;
             color: white;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .header h1 {
-            font-size: 24px;
-            font-weight: bold;
+            font-size: 1.5rem;
+            letter-spacing: 1px;
         }
 
         .header p {
-            font-size: 12px;
+            font-size: 0.8rem;
             opacity: 0.8;
         }
 
-        /* Botón de Instalación Superior */
-        #btnInstalar {
-            background: #28a745;
-            color: white;
-            border: none;
-            padding: 12px;
-            border-radius: 8px;
-            width: 90%;
-            font-weight: bold;
-            margin: 10px auto;
-            text-align: center;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
-        }
-
-        /* Área de Mensajes */
+        /* Zona de Mensajes */
         .chat-box {
             flex: 1;
             padding: 20px;
@@ -95,7 +97,7 @@
             gap: 15px;
         }
 
-        /* Globos de Mensaje */
+        /* Estilo de los Globos de Mensaje */
         .mensaje {
             max-width: 80%;
             padding: 12px 16px;
@@ -106,7 +108,7 @@
             word-wrap: break-word;
         }
 
-        .Gino {
+        .gino {
             background: rgba(255, 255, 255, 0.2);
             align-self: flex-start;
             border-top-left-radius: 2px;
@@ -138,7 +140,7 @@
             font-size: 1rem;
         }
 
-        .boton {
+        .btn {
             background: #00c6ff;
             border: none;
             width: 45px;
@@ -146,14 +148,16 @@
             border-radius: 50%;
             color: white;
             cursor: pointer;
+            font-size: 1.2rem;
             display: flex;
             justify-content: center;
             align-items: center;
             transition: transform 0.2s;
             user-select: none;
+            -webkit-user-select: none;
         }
 
-        .boton:active {
+        .btn:active {
             transform: scale(0.9);
         }
 
@@ -169,140 +173,168 @@
     <div class="app-container">
         <div class="header">
             <h1>Gino</h1>
-            <p>● En línea</p>
+            <p id="estado">● En línea</p>
         </div>
 
-        <!-- Botón de instalación (oculto por defecto hasta que lo active el script) -->
-        <button id="btnInstalar" style="display: none;">📥 Instalar App de Gino</button>
-
         <div class="chat-box" id="chatBox">
-            <div class="mensaje Gino">
+            <div class="mensaje gino">
                 ¡Hola! Soy Gino, esta es una ia de Nicolas Brizuela, para ayudarte. ¿De qué te gustaría charlar hoy? 😊
             </div>
         </div>
 
         <div class="input-area">
-            <input type="text" id="userInput" placeholder="Escribe un mensaje...">
-            <button class="boton" id="sendButton">➔</button>
-            <button class="boton btn-voz" id="btnVoz">🎤</button>
+            <input type="text" id="userInput" placeholder="Escribe un mensaje..." onkeypress="detectarEnter(event)">
+            <button class="btn" onclick="enviarMensaje()">➤</button>
+            <button class="btn btn-voz" id="btnVoz" onclick="controlarAudio()">🎤</button>
         </div>
     </div>
 
     <script>
-        // Configuración de la API (Asegúrate de tener configurada tu API Key en Vercel o aquí si la usabas directa)
+        // ==========================================
+        // CONFIGURACIÓN: TU API KEY
+        // Procura usar las variables de entorno de Vercel para no exponerla públicamente en GitHub
+        // ==========================================
+        const API_KEY = "TU_API_KEY_AQUI"; 
+
+        // Burbujas
+        const contenedor = document.getElementById('contenedor-burbujas');
+        for (let i = 0; i < 15; i++) {
+            let burbuja = document.createElement('div');
+            burbuja.classList.add('burbuja');
+            let tamano = Math.random() * 60 + 20;
+            burbuja.style.width = `${tamano}px`;
+            burbuja.style.height = `${tamano}px`;
+            burbuja.style.left = `${Math.random() * 100}%`;
+            burbuja.style.animationDelay = `${Math.random() * 8}s`;
+            burbuja.style.animationDuration = `${Math.random() * 5 + 7}s`;
+            contenedor.appendChild(burbuja);
+        }
+
         const chatBox = document.getElementById('chatBox');
         const userInput = document.getElementById('userInput');
-        const sendButton = document.getElementById('sendButton');
+        const estado = document.getElementById('estado');
 
-        function appendMessage(text, sender) {
+        // Enviar Texto Normal
+        async function enviarMensaje() {
+            const texto = userInput.value.trim();
+            if (texto === "") return;
+
+            agregarMensaje(texto, 'usuario');
+            userInput.value = "";
+            procesarConGemini(texto);
+        }
+
+        // Conectar con el cerebro de Google Gemini
+        async function procesarConGemini(textoPrompt) {
+            if (API_KEY === "TU_API_KEY_AQUI" || API_KEY === "") {
+                setTimeout(() => {
+                    agregarMensaje("¡Hola! Acordate de poner tu API Key en la línea 133 del código, o configurarla en Vercel.", 'gino');
+                }, 1000);
+                return;
+            }
+
+            try {
+                estado.innerText = "● Gino está pensando...";
+                estado.style.color = "#ffeb3b";
+
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
+                const data = {
+                    contents: [{ parts: [{ text: textoPrompt }] }],
+                    systemInstruction: {
+                        parts: [{ text: "Tu nombre es Gino. Sos una inteligencia artificial amigable creada por Nicolas Brizuela para ayudar al usuario. Hablás en español latino corto, alegre y fluido." }]
+                    }
+                };
+
+                const respuesta = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const resultadoJson = await respuesta.json();
+                const respuestaIA = resultadoJson.candidates[0].content.parts[0].text;
+                agregarMensaje(respuestaIA, 'gino');
+
+            } catch (error) {
+                console.error(error);
+                agregarMensaje("Che, se me cortó la onda con el servidor. Revisá la API Key.", 'gino');
+            } finally {
+                estado.innerText = "● En línea";
+                estado.style.color = "white";
+            }
+        }
+
+        function detectarEnter(event) {
+            if (event.key === "Enter") enviarMensaje();
+        }
+
+        function agregarMensaje(texto, remitente) {
             const nuevoMensaje = document.createElement('div');
-            nuevoMensaje.classList.add('mensaje', sender);
-            nuevoMensaje.innerText = text;
+            nuevoMensaje.classList.add('mensaje', remitente);
+            nuevoMensaje.innerText = texto;
             chatBox.appendChild(nuevoMensaje);
             chatBox.scrollTop = chatBox.scrollHeight;
         }
 
-        async function sendMessage() {
-            const text = userInput.value.trim();
-            if (!text) return;
+        // ==========================================
+        // 🎙️ NUEVA LÓGICA DE AUDIO ULTRA COMPATIBLE
+        // ==========================================
+        let mediaRecorder;
+        let chunks = [];
+        let estaGrabando = false;
 
-            appendMessage(text, 'usuario');
-            userInput.value = '';
+        async function controlarAudio() {
+            const btn = document.getElementById('btnVoz');
+            
+            if (!estaGrabando) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    chunks = [];
 
-            try {
-                // Simulación de llamada al servidor/API. Reemplaza esta sección con tu fetch real a Gemini
-                // Si usabas una URL de Vercel, va acá.
-                const response = await fetch('/api/chat', { 
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: text })
-                });
-                
-                if(!response.ok) throw new Error("Error de API");
-                const data = await response.json();
-                appendMessage(data.reply, 'Gino');
-            } catch (error) {
-                // Si falla la conexión real, saltará este mensaje que tenías originalmente
-                appendMessage("Che, se me cortó la onda con el servidor. Revisá la API Key.", 'Gino');
+                    mediaRecorder.ondataavailable = (e) => {
+                        if (e.data.size > 0) chunks.push(e.data);
+                    };
+
+                    mediaRecorder.onstop = async () => {
+                        agregarMensaje("🎤 [Mensaje de Voz Enviado]", 'usuario');
+                        
+                        estado.innerText = "● Gino escuchando audio...";
+                        setTimeout(() => {
+                            procesarConGemini("Acabo de mandarte una nota de voz, saludame de forma divertida y decime que la escuchaste bien.");
+                        }, 1000);
+                    };
+
+                    mediaRecorder.start();
+                    estaGrabando = true;
+                    btn.innerText = "🛑";
+                    btn.style.background = "#333";
+                    estado.innerText = "● Grabando audio...";
+                    estado.style.color = "#ff416c";
+
+                } catch (err) {
+                    console.error("Error accediendo al micro:", err);
+                    alert("No se pudo acceder al micrófono. Asegurate de dar permisos si salta el cartel en tu celular.");
+                }
+            } else {
+                if (mediaRecorder && mediaRecorder.state !== "inactive") {
+                    mediaRecorder.stop();
+                    mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                }
+                estaGrabando = false;
+                btn.innerText = "🎤";
+                btn.style.background = "linear-gradient(to right, #ff4b2b, #ff416c)";
             }
         }
 
-        sendButton.addEventListener('click', sendMessage);
-        userInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') sendMessage();
-        });
-
-        // 🎤 SISTEMA DE RECONOCIMIENTO DE VOZ (En inglés nativo de JavaScript)
-        let reconocimiento;
-        let grabando = false;
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-        if (SpeechRecognition) {
-            reconocimiento = new SpeechRecognition();
-            reconocimiento.lang = 'es-AR';
-            reconocimiento.continuous = false;
-            reconocimiento.interimResults = false;
-
-            reconocimiento.onstart = () => {
-                grabando = true;
-                document.getElementById('btnVoz').innerText = '🛑';
-                document.getElementById('btnVoz').style.background = '#333';
-            };
-
-            reconocimiento.onresult = (event) => {
-                const textoEscuchado = event.results[0][0].transcript;
-                userInput.value = textoEscuchado;
-                sendMessage(); // Llama a la función correcta en inglés
-            };
-
-            reconocimiento.onend = () => {
-                grabando = false;
-                document.getElementById('btnVoz').innerText = '🎤';
-                document.getElementById('btnVoz').style.background = 'linear-gradient(to right, #ff4b2b, #ff416c)';
-            };
-
-            document.getElementById('btnVoz').addEventListener('click', () => {
-                if (grabando) {
-                    reconocimiento.stop();
-                } else {
-                    reconocimiento.start();
-                }
-            });
-        }
-
-        // 🚀 REGISTRO DEL SERVICE WORKER
+        // ==========================================
+        // ⚙️ REGISTRO DEL SERVICE WORKER (PWA)
+        // ==========================================
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(reg => console.log('Service Worker registrado', reg))
-                    .catch(err => console.error('Error en Service Worker', err));
-            });
-        }
-
-        // 📥 LÓGICA DEL BOTÓN DE INSTALACIÓN IMPERDIBLE
-        let deferredPrompt;
-        const btnInstalar = document.getElementById('btnInstalar');
-
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            if (btnInstalar) {
-                btnInstalar.style.display = 'block'; // Solo aparece si es instalable
-            }
-        });
-
-        if (btnInstalar) {
-            btnInstalar.addEventListener('click', () => {
-                if (deferredPrompt) {
-                    deferredPrompt.prompt();
-                    deferredPrompt.userChoice.then((choiceResult) => {
-                        if (choiceResult.outcome === 'accepted') {
-                            console.log('El usuario instaló Gino IA');
-                            btnInstalar.style.display = 'none';
-                        }
-                        deferredPrompt = null;
-                    });
-                }
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('Service Worker registrado con éxito', reg))
+                    .catch(err => console.error('Error al registrar el Service Worker', err));
             });
         }
     </script>
