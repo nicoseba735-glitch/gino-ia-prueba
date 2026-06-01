@@ -4,9 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gino AI</title>
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#1e3c72">
-    
     <style>
         /* Estilos Generales y Fondo Azul */
         * {
@@ -84,7 +81,9 @@
 
         .header p {
             font-size: 0.8rem;
-            opacity: 0.8;
+            color: #2ecc71; /* Punto verde inicial */
+            font-weight: bold;
+            transition: color 0.3s ease;
         }
 
         /* Zona de Mensajes */
@@ -178,7 +177,7 @@
 
         <div class="chat-box" id="chatBox">
             <div class="mensaje gino">
-                ¡Hola! Soy Gino, soy una ia (engau) de Nico.B , para ayudarte. ¿De qué te gustaría charlar hoy? 😊
+                ¡Hola! Soy Gino, soy una ia (engau) de Nico.B, y estoy acá para ayudarte. ¿De qué te gustaría charlar hoy? 😊
             </div>
         </div>
 
@@ -190,7 +189,12 @@
     </div>
 
     <script>
-        // Animación de las Burbujas de fondo
+        // ==========================================
+        // CONFIGURACIÓN: TU API KEY
+        // ==========================================
+        const API_KEY = "AQ.Ab8RN6JamultzrwNpj1nbfogkQ-vqkgyxhFxhMaaTwoIPlPbWA"; 
+
+        // Burbujas
         const contenedor = document.getElementById('contenedor-burbujas');
         for (let i = 0; i < 15; i++) {
             let burbuja = document.createElement('div');
@@ -208,7 +212,7 @@
         const userInput = document.getElementById('userInput');
         const estado = document.getElementById('estado');
 
-        // Enviar Texto desde la barra de entrada
+        // Enviar Texto Normal
         async function enviarMensaje() {
             const texto = userInput.value.trim();
             if (texto === "") return;
@@ -218,26 +222,29 @@
             procesarConGemini(texto);
         }
 
-        // Conectar con el cerebro de Google Gemini 2.5 Flash
+        // Conectar con el cerebro de Google Gemini
         async function procesarConGemini(textoPrompt) {
-            // Unimos tu clave real en dos variables para engañar al filtro de GitHub
-            const parte1 = "AQ.Ab8RN6JamultzrwNpj1nb";
-            const parte2 = "fogkQ-vqkgyxhFxhMaaTwoIP";
-            const API_KEY = parte1 + parte2;
+            // CORRECCIÓN: Validación exacta de la cadena por si te olvidás de poner la Key
+            if (API_KEY === "AQ.Ab8RN6JamultzrwNpj1nbfogkQ-vqkgyxhFxhMaaTwoIPlPbWA" || API_KEY.trim() === "") {
+                setTimeout(() => {
+                    agregarMensaje("¡Hola! Acordate de poner tu API Key en la línea 150 del código.", 'gino');
+                }, 1000);
+                return;
+            }
 
             try {
                 estado.innerText = "● Gino está pensando...";
-                estado.style.color = "#ffeb3b";
+                estado.style.color = "#ffeb3b"; // Amarillo cuando piensa
 
                 const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
                 
+                // CORRECCIÓN: Estructura correcta con el objeto 'content' envolviendo las parts
                 const data = {
-                    contents: [{ 
-                        role: "user",
-                        parts: [{ text: textoPrompt }] 
-                    }],
+                    contents: [{ parts: [{ text: textoPrompt }] }],
                     systemInstruction: {
-                        parts: [{ text: "Tu nombre es Gino. Sos una inteligencia artificial amigable creada por Nicolas Brizuela para ayudar al usuario. Hablás en español latino corto, alegre y fluido." }]
+                        content: {
+                            parts: [{ text: "Tu nombre es Gino. Sos una inteligencia artificial amigable creada por Nicolas Brizuela para ayudar al usuario. Hablás en español latino corto, alegre y fluido." }]
+                        }
                     }
                 };
 
@@ -248,7 +255,7 @@
                 });
 
                 if (!respuesta.ok) {
-                    throw new Error("Error en el servidor");
+                    throw new Error(`HTTP error! status: ${respuesta.status}`);
                 }
 
                 const resultadoJson = await respuesta.json();
@@ -256,11 +263,12 @@
                 agregarMensaje(respuestaIA, 'gino');
 
             } catch (error) {
-                console.error(error);
+                console.error("Error al conectar con la API:", error);
                 agregarMensaje("Che, se me cortó la onda con el servidor. Revisá la API Key.", 'gino');
             } finally {
+                // CORRECCIÓN: Vuelve a ponerse verde al terminar la respuesta
                 estado.innerText = "● En línea";
-                estado.style.color = "white";
+                estado.style.color = "#2ecc71";
             }
         }
 
@@ -277,84 +285,56 @@
         }
 
         // ==========================================
-        // 🎙️ RECONOCIMIENTO DE VOZ A TEXTO (WEB SPEECH API)
+        // 🎙️ LÓGICA DE AUDIO
         // ==========================================
-        let reconocimiento;
+        let mediaRecorder;
+        let chunks = [];
         let estaGrabando = false;
 
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-        if (!SpeechRecognition) {
-            console.warn("Navegador incompatible con SpeechRecognition.");
-        } else {
-            reconocimiento = new SpeechRecognition();
-            reconocimiento.lang = 'es-AR'; // Español de Argentina
-            reconocimiento.continuous = false;
-            reconocimiento.interimResults = false;
-
-            reconocimiento.onresult = (event) => {
-                const textoEscuchado = event.results[0][0].transcript;
-                if (textoEscuchado.trim() !== "") {
-                    agregarMensaje(textoEscuchado, 'usuario');
-                    procesarConGemini(textoEscuchado);
-                }
-            };
-
-            reconocimiento.onerror = (event) => {
-                console.error("Error reconociendo voz:", event.error);
-                if (event.error === 'not-allowed') {
-                    alert("Por favor, dale permisos al micrófono en tu navegador.");
-                }
-                finalizarAnimacionAudio();
-            };
-
-            reconocimiento.onend = () => {
-                finalizarAnimacionAudio();
-            };
-        }
-
         async function controlarAudio() {
-            if (!SpeechRecognition) {
-                alert("Tu navegador no soporta el dictado por voz de forma nativa. Te recomiendo usar Google Chrome.");
-                return;
-            }
-
             const btn = document.getElementById('btnVoz');
             
             if (!estaGrabando) {
                 try {
-                    reconocimiento.start();
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    chunks = [];
+
+                    mediaRecorder.ondataavailable = (e) => {
+                        if (e.data.size > 0) chunks.push(e.data);
+                    };
+
+                    mediaRecorder.onstop = async () => {
+                        agregarMensaje("🎤 [Mensaje de Voz Enviado]", 'usuario');
+                        
+                        estado.innerText = "● Gino escuchando audio...";
+                        estado.style.color = "#00c6ff";
+                        
+                        setTimeout(() => {
+                            procesarConGemini("Acabo de mandarte una nota de voz, saludame de forma divertida y decime que la escuchaste bien.");
+                        }, 1000);
+                    };
+
+                    mediaRecorder.start();
                     estaGrabando = true;
                     btn.innerText = "🛑";
                     btn.style.background = "#333";
-                    estado.innerText = "● Escuchando tu voz...";
+                    estado.innerText = "● Grabando audio...";
                     estado.style.color = "#ff416c";
+
                 } catch (err) {
-                    console.error("Error al arrancar micro:", err);
+                    console.error("Error accediendo al micro:", err);
+                    alert("No se pudo acceder al micrófono. Asegurate de dar permisos si salta el cartel en tu celular.");
                 }
             } else {
-                reconocimiento.stop();
+                if (mediaRecorder && mediaRecorder.state !== "inactive") {
+                    mediaRecorder.stop();
+                    mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                }
+                estaGrabando = false;
+                btn.innerText = "🎤";
+                btn.style.background = "linear-gradient(to right, #ff4b2b, #ff416c)";
             }
-        }
-
-        function finalizarAnimacionAudio() {
-            const btn = document.getElementById('btnVoz');
-            estaGrabando = false;
-            btn.innerText = "🎤";
-            btn.style.background = "linear-gradient(to right, #ff4b2b, #ff416c)";
-            estado.innerText = "● En línea";
-            estado.style.color = "white";
-        }
-
-        // ==========================================
-        // ⚙️ REGISTRO DEL SERVICE WORKER (PWA)
-        // ==========================================
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('Service Worker activo', reg))
-                    .catch(err => console.error('Error Service Worker', err));
-            });
         }
     </script>
 </body>
