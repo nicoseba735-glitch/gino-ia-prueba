@@ -81,9 +81,7 @@
 
         .header p {
             font-size: 0.8rem;
-            color: #2ecc71; /* Punto verde inicial */
-            font-weight: bold;
-            transition: color 0.3s ease;
+            opacity: 0.8;
         }
 
         /* Zona de Mensajes */
@@ -177,7 +175,7 @@
 
         <div class="chat-box" id="chatBox">
             <div class="mensaje gino">
-                ¡Hola! Soy Gino, soy una ia (engau) de Nico.B, y estoy acá para ayudarte. ¿De qué te gustaría charlar hoy? 😊
+                ¡Hola! Soy Gino, esta es una ia de Nicolas Brizuela, para ayudarte. ¿De qué te gustaría charlar hoy? 😊
             </div>
         </div>
 
@@ -224,27 +222,22 @@
 
         // Conectar con el cerebro de Google Gemini
         async function procesarConGemini(textoPrompt) {
-            // CORRECCIÓN: Validación exacta de la cadena por si te olvidás de poner la Key
-            if (API_KEY === "TU_API_KEY_AQUI" || API_KEY.trim() === "") {
+            if (API_KEY === "TU_API_KEY_ACA") {
                 setTimeout(() => {
-                    agregarMensaje("¡Hola! Acordate de poner tu API Key en la línea 150 del código.", 'gino');
+                    agregarMensaje("¡Hola! Acordate de poner tu API Key en la línea 121 del código.", 'gino');
                 }, 1000);
                 return;
             }
 
             try {
                 estado.innerText = "● Gino está pensando...";
-                estado.style.color = "#ffeb3b"; // Amarillo cuando piensa
+                estado.style.color = "#ffeb3b";
 
                 const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
-                
-                // CORRECCIÓN: Estructura correcta con el objeto 'content' envolviendo las parts
                 const data = {
                     contents: [{ parts: [{ text: textoPrompt }] }],
                     systemInstruction: {
-                        content: {
-                            parts: [{ text: "Tu nombre es Gino. Sos una inteligencia artificial amigable creada por Nicolas Brizuela para ayudar al usuario. Hablás en español latino corto, alegre y fluido." }]
-                        }
+                        parts: [{ text: "Tu nombre es Gino. Sos una inteligencia artificial amigable creada por Nicolas Brizuela para ayudar al usuario. Hablás en español latino corto, alegre y fluido." }]
                     }
                 };
 
@@ -254,24 +247,16 @@
                     body: JSON.stringify(data)
                 });
 
-                if (!respuesta.ok) {
-                    throw new Error(`HTTP error! status: ${respuesta.status}`);
-                }
-
                 const resultadoJson = await respuesta.json();
                 const respuestaIA = resultadoJson.candidates[0].content.parts[0].text;
                 agregarMensaje(respuestaIA, 'gino');
 
             } catch (error) {
-    console.error("Error al conectar con la API:", error);
-    // Esto te va a mostrar el error real en la pantalla del celular:
-    agregarMensaje("Error: " + error.message, 'gino');
-}
-
+                console.error(error);
+                agregarMensaje("Che, se me cortó la onda con el servidor. Revisá la API Key.", 'gino');
             } finally {
-                // CORRECCIÓN: Vuelve a ponerse verde al terminar la respuesta
                 estado.innerText = "● En línea";
-                estado.style.color = "#2ecc71";
+                estado.style.color = "white";
             }
         }
 
@@ -286,59 +271,7 @@
             chatBox.appendChild(nuevoMensaje);
             chatBox.scrollTop = chatBox.scrollHeight;
         }
-
-        // ==========================================
-        // 🎙️ LÓGICA DE AUDIO
-        // ==========================================
-        let mediaRecorder;
-        let chunks = [];
-        let estaGrabando = false;
-
-        async function controlarAudio() {
-            const btn = document.getElementById('btnVoz');
-            
-            if (!estaGrabando) {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    mediaRecorder = new MediaRecorder(stream);
-                    chunks = [];
-
-                    mediaRecorder.ondataavailable = (e) => {
-                        if (e.data.size > 0) chunks.push(e.data);
-                    };
-
-                    mediaRecorder.onstop = async () => {
-                        agregarMensaje("🎤 [Mensaje de Voz Enviado]", 'usuario');
-                        
-                        estado.innerText = "● Gino escuchando audio...";
-                        estado.style.color = "#00c6ff";
-                        
-                        setTimeout(() => {
-                            procesarConGemini("Acabo de mandarte una nota de voz, saludame de forma divertida y decime que la escuchaste bien.");
-                        }, 1000);
-                    };
-
-                    mediaRecorder.start();
-                    estaGrabando = true;
-                    btn.innerText = "🛑";
-                    btn.style.background = "#333";
-                    estado.innerText = "● Grabando audio...";
-                    estado.style.color = "#ff416c";
-
-                } catch (err) {
-                    console.error("Error accediendo al micro:", err);
-                    alert("No se pudo acceder al micrófono. Asegurate de dar permisos si salta el cartel en tu celular.");
-                }
-            } else {
-                if (mediaRecorder && mediaRecorder.state !== "inactive") {
-                    mediaRecorder.stop();
-                    mediaRecorder.stream.getTracks().forEach(track => track.stop());
-                }
-                estaGrabando = false;
-                btn.innerText = "🎤";
-                btn.style.background = "linear-gradient(to right, #ff4b2b, #ff416c)";
-            }
-        }
+        
     </script>
 </body>
 </html>
