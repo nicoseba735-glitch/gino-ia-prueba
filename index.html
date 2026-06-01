@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+        <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -190,7 +190,7 @@
         // ==========================================
         // CONFIGURACIÓN: TU API KEY
         // ==========================================
-        const API_KEY = "AQ.Ab8RN6JamultzrwNpj1nbfogkQ-vqkgyxhFxhMaaTwoIPlPbWA"; 
+        const API_KEY = "TU_API_KEY_ACA"; 
 
         // Burbujas
         const contenedor = document.getElementById('contenedor-burbujas');
@@ -271,7 +271,56 @@
             chatBox.appendChild(nuevoMensaje);
             chatBox.scrollTop = chatBox.scrollHeight;
         }
+
+                // ==========================================
+        // 🎙️ SISTEMA DE RECONOCIMIENTO DE VOZ RE-ACTIVADO
+        // ==========================================
+        let reconocimiento;
+        let grabando = false;
+
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         
+        if (SpeechRecognition) {
+            reconocimiento = new SpeechRecognition();
+            reconocimiento.lang = 'es-AR';
+            reconocimiento.continuous = false;
+            reconocimiento.interimResults = false;
+
+            reconocimiento.onstart = () => {
+                grabando = true;
+                document.getElementById('btnVoz').innerText = "🛑";
+                document.getElementById('btnVoz').style.background = "#333";
+                estado.innerText = "● Gino escuchando...";
+                estado.style.color = "#4caf50";
+            };
+
+            reconocimiento.onresult = (event) => {
+                const textoEscuchado = event.results[0][0].transcript;
+                userInput.value = textoEscuchado;
+                enviarMensaje(); 
+            };
+
+            reconocimiento.onend = () => {
+                grabando = false;
+                document.getElementById('btnVoz').innerText = "🎤";
+                document.getElementById('btnVoz').style.background = "linear-gradient(to right, #ff4b2b, #ff416c)";
+                estado.innerText = "● En línea";
+                estado.style.color = "white";
+            };
+        }
+
+        window.controlarAudio = function() {
+            if (!reconocimiento) {
+                alert("El reconocimiento de voz no está disponible o está bloqueado.");
+                return;
+            }
+            if (grabando) {
+                reconocimiento.stop();
+            } else {
+                reconocimiento.start();
+            }
+        }
+
     </script>
 </body>
 </html>
