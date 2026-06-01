@@ -263,8 +263,11 @@
                 agregarMensaje(respuestaIA, 'gino');
 
             } catch (error) {
-                console.error("Error al conectar con la API:", error);
-                agregarMensaje("Che, se me cortó la onda con el servidor. Revisá la API Key.", 'gino');
+    console.error("Error al conectar con la API:", error);
+    // Esto te va a mostrar el error real en la pantalla del celular:
+    agregarMensaje("Error: " + error.message, 'gino');
+}
+
             } finally {
                 // CORRECCIÓN: Vuelve a ponerse verde al terminar la respuesta
                 estado.innerText = "● En línea";
